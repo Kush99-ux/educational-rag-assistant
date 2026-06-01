@@ -1,0 +1,1 @@
+print("Educational RAG Assistant")
