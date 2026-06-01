@@ -1,0 +1,9 @@
+project:
+  name: Educational RAG Assistant
+
+retrieval:
+  top_k: 5
+
+chunking:
+  chunk_size: 500
+  overlap: 100

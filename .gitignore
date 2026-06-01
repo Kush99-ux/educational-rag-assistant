@@ -1,9 +1,19 @@
+# environments
 .venv/
+
+# secrets
+.env
+
+# logs
+logs/
+
+# python
 __pycache__/
 *.pyc
 
+# vector databases
+vector_store/
+
+# uploaded files
 data/raw/*
 data/processed/*
-
-.env
-.vscode/
