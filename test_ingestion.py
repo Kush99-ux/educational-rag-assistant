@@ -1,16 +1,33 @@
 from src.ingestion.loader_factory import load_document
 from src.preprocessing.chunker import chunk_document
+from src.embeddings.embedding_pipeline import embed_chunks
 
 document = load_document(
     "C:/Users/kushs/Downloads/c1.pdf"
 )
 
-chunks = chunk_document(document)
+chunks = chunk_document(
+    document
+)
 
-print(f"Total Chunks: {len(chunks)}")
+embedded_chunks = embed_chunks(
+    chunks
+)
 
-print("\nFirst Chunk Metadata:")
-print(chunks[0].metadata)
+print(
+    f"Chunks: {len(chunks)}"
+)
 
-print("\nFirst Chunk Preview:")
-print(chunks[0].text[:300])
+print(
+    f"Embedded Chunks: {len(embedded_chunks)}"
+)
+
+print(
+    len(
+        embedded_chunks[0].embedding
+    )
+)
+
+print(
+    embedded_chunks[0].metadata
+)
