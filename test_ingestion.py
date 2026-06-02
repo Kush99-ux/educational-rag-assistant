@@ -1,9 +1,8 @@
-from src.ingestion.pdf_loader import load_pdf
+from src.ingestion.loader_factory import load_document
 
-document = load_pdf(
+document = load_document(
     "C:/Users/kushs/Downloads/c1.pdf"
 )
 
-print(document.filename)
-print(document.page_count)
-print(document.content[:500])
+print(document.source_name)
+print(document.metadata)

@@ -33,7 +33,10 @@ def load_pdf(pdf_path: str) -> Document:
     content = "\n\n".join(text_parts)
 
     return Document(
-        filename=path.name,
-        content=content,
-        page_count=len(reader.pages)
-    )
+    source_name=path.name,
+    content=content,
+    metadata={
+        "type": "pdf",
+        "pages": len(reader.pages)
+    }
+)

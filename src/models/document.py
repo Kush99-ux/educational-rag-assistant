@@ -1,8 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import uuid
 
 
 @dataclass
 class Document:
-    filename: str
-    content: str
-    page_count: int
+    document_id: str = field(
+        default_factory=lambda: str(uuid.uuid4())
+    )
+
+    source_name: str = ""
+
+    content: str = ""
+
+    metadata: dict = field(default_factory=dict)
