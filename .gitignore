@@ -11,9 +11,17 @@ logs/
 __pycache__/
 *.pyc
 
+# IDE
+.vscode/
+.idea/
+
 # vector databases
 vector_store/
 
 # uploaded files
 data/raw/*
 data/processed/*
+
+# OS
+.DS_Store
+Thumbs.db

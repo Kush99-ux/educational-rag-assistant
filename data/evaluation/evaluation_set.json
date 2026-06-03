@@ -1,0 +1,18 @@
+[
+    {
+        "question": "Where is Kush Sahu studying?",
+        "expected_source": "c1.pdf"
+    },
+    {
+        "question": "What is the GPA of Kush Sahu?",
+        "expected_source": "c1.pdf"
+    },
+    {
+        "question": "What degree is Kush pursuing?",
+        "expected_source": "c1.pdf"
+    },
+    {
+        "question": "Which university does Kush attend?",
+        "expected_source": "c1.pdf"
+    }
+]
