@@ -14,6 +14,11 @@ from src.llm.rag_pipeline import (
     RAGPipeline
 )
 
+from src.embeddings.bge_embedder import (
+    BGEEmbedder
+)
+
+embedder = BGEEmbedder()
 document = load_document(
     "C:/Users/kushs/Downloads/c1.pdf"
 )
@@ -23,7 +28,8 @@ chunks = chunk_document(
 )
 
 embedded_chunks = embed_chunks(
-    chunks
+    chunks,
+    embedder
 )
 
 vector_store = FAISSVectorStore()
@@ -33,7 +39,8 @@ vector_store.add(
 )
 
 retriever = FAISSRetriever(
-    vector_store
+    vector_store,
+    embedder
 )
 
 rag = RAGPipeline(

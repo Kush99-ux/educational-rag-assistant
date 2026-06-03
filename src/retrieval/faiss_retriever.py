@@ -9,12 +9,13 @@ class FAISSRetriever(
 
     def __init__(
         self,
-        vector_store: FAISSVectorStore
+        vector_store: FAISSVectorStore,
+        embedder: BGEEmbedder
     ):
 
         self.vector_store = vector_store
 
-        self.embedder = BGEEmbedder()
+        self.embedder = embedder
 
     def retrieve(
         self,

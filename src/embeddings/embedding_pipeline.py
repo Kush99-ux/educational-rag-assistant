@@ -4,10 +4,10 @@ from src.embeddings.bge_embedder import BGEEmbedder
 
 
 def embed_chunks(
-    chunks: list[Chunk]
+    chunks: list[Chunk],
+    embedder = BGEEmbedder
 ) -> list[EmbeddedChunk]:
 
-    embedder = BGEEmbedder()
 
     texts = [
         chunk.text
