@@ -5,6 +5,9 @@ from src.core.service_container import (
     ServiceContainer
 )
 
+from src.models.quiz_request import (
+    QuizRequest
+)
 # --------------------------------------------------
 # PAGE CONFIG
 # --------------------------------------------------
@@ -69,6 +72,9 @@ if "total_chunks" not in st.session_state:
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
+if "quiz_result" not in ( st.session_state): 
+    st.session_state.quiz_result = ""
 
 # --------------------------------------------------
 # SIDEBAR
@@ -212,6 +218,8 @@ with st.sidebar:
 
             st.session_state.chat_history = []
 
+            st.session_state.quiz_result = ""
+
             st.session_state.loaded_from_disk = False
 
             # Fresh container
@@ -286,6 +294,115 @@ with st.sidebar:
             st.session_state.total_chunks
         )
 
+    # ----------------------------------------------
+    # Quiz Section 
+    # ----------------------------------------------
+
+    st.divider()
+
+    st.subheader("🧠 Quiz Generator")
+
+    quiz_difficulty = st.selectbox(
+        "Difficulty",
+        [
+            "easy",
+            "medium",
+            "hard",
+            "mixed"
+        ]
+    )
+
+    quiz_length = st.selectbox(
+        "Questions",
+        [
+            5,
+            10,
+            20,
+            50
+        ]
+    )
+
+    quiz_topics = st.text_input(
+        "Topics (comma separated)"
+    )
+
+    quiz_exam_mode = st.checkbox(
+        "Exam Focused"
+    )
+
+    generate_quiz = st.button(
+        "Generate Quiz"
+    )
+
+    if st.button("Clear Quiz"): 
+        st.session_state.quiz_result = ""
+        st.rerun()
+
+    if generate_quiz:
+
+        if len(
+            st.session_state.documents
+        ) == 0:
+
+            st.warning(
+                "Please index a document first."
+            )
+
+        else:
+
+            topic_list = []
+
+            if quiz_topics.strip():
+
+                topic_list = [
+
+                    topic.strip()
+
+                    for topic in quiz_topics.split(",")
+                ]
+
+            request = QuizRequest(
+
+                difficulty=
+                quiz_difficulty,
+
+                length=
+                quiz_length,
+
+                topics=
+                topic_list,
+
+                exam_focused=
+                quiz_exam_mode
+            )
+
+            try:
+
+                with st.spinner(
+                    "Generating quiz..."
+                ):
+
+                    result = (
+
+                        st.session_state
+                        .container
+                        .quiz_service
+                        .generate_quiz(
+                            request
+                        )
+
+                    )
+
+                st.session_state.quiz_result = (
+                    result.quiz_text
+                )
+
+            except Exception as e:
+
+                st.error(
+                    f"Error generating quiz: {e}"
+                )
+                
 # --------------------------------------------------
 # MAIN AREA
 # --------------------------------------------------
@@ -297,6 +414,19 @@ st.title(
 st.caption(
     "Ask questions about your uploaded documents."
 )
+
+if ( 
+    st.session_state.quiz_result
+): 
+    st.subheader(
+        "📝 Generated Quiz"
+    )
+
+    st.markdown( 
+        st.session_state.quiz_result
+    )
+
+    st.divider()
 
 # --------------------------------------------------
 # DISPLAY CHAT HISTORY
@@ -313,6 +443,7 @@ for message in (
         st.write(
             message["content"]
         )
+
 
 # --------------------------------------------------
 # CHAT INPUT
