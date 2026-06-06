@@ -17,6 +17,10 @@ from src.services.document_ingestion_service import (
     DocumentIngestionService
 )
 
+from src.services.quiz_service import (
+    QuizService
+)
+
 
 class ServiceContainer:
 
@@ -46,4 +50,10 @@ class ServiceContainer:
                 self.embedder,
                 self.vector_store
             )
+        )
+
+        self.quiz_service = (
+            QuizService(
+                self.vector_store
+             )
         )
