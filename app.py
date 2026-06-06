@@ -67,6 +67,9 @@ if "documents" not in st.session_state:
 if "total_chunks" not in st.session_state:
     st.session_state.total_chunks = 0
 
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
 # --------------------------------------------------
 # SIDEBAR
 # --------------------------------------------------
@@ -141,8 +144,6 @@ with st.sidebar:
                     .ingest(save_path)
                 )
 
-            # update document list
-
             if uploaded_file.name not in (
                 st.session_state.documents
             ):
@@ -151,13 +152,9 @@ with st.sidebar:
                     uploaded_file.name
                 )
 
-            # update chunk count
-
             st.session_state.total_chunks += (
                 chunk_count
             )
-
-            # auto-save updated knowledge base
 
             st.session_state.container.vector_store.save(
                 "vector_store"
@@ -166,6 +163,20 @@ with st.sidebar:
             st.success(
                 f"Indexed {chunk_count} chunks."
             )
+
+    st.divider()
+
+    # ----------------------------------------------
+    # CHAT CONTROLS
+    # ----------------------------------------------
+
+    if st.button(
+        "🧹 Clear Chat History"
+    ):
+
+        st.session_state.chat_history = []
+
+        st.rerun()
 
     st.divider()
 
@@ -235,19 +246,35 @@ st.caption(
     "Ask questions about your uploaded documents."
 )
 
-question = st.text_input(
-    "Question"
-)
+# --------------------------------------------------
+# DISPLAY CHAT HISTORY
+# --------------------------------------------------
 
-ask_button = st.button(
-    "Ask"
+for message in (
+    st.session_state.chat_history
+):
+
+    with st.chat_message(
+        message["role"]
+    ):
+
+        st.write(
+            message["content"]
+        )
+
+# --------------------------------------------------
+# CHAT INPUT
+# --------------------------------------------------
+
+question = st.chat_input(
+    "Ask a question about your documents..."
 )
 
 # --------------------------------------------------
 # QUESTION ANSWERING
 # --------------------------------------------------
 
-if ask_button:
+if question:
 
     if len(
         st.session_state.documents
@@ -258,6 +285,29 @@ if ask_button:
         )
 
     else:
+
+        # ------------------------------------------
+        # SHOW USER MESSAGE
+        # ------------------------------------------
+
+        st.session_state.chat_history.append(
+            {
+                "role": "user",
+                "content": question
+            }
+        )
+
+        with st.chat_message(
+            "user"
+        ):
+
+            st.write(
+                question
+            )
+
+        # ------------------------------------------
+        # GENERATE ANSWER
+        # ------------------------------------------
 
         with st.spinner(
             "Generating answer..."
@@ -271,7 +321,9 @@ if ask_button:
                 )
             )
 
-        # debug output
+        # ------------------------------------------
+        # DEBUG OUTPUT
+        # ------------------------------------------
 
         print("\nRAW SOURCES")
 
@@ -279,28 +331,41 @@ if ask_button:
 
             print(source)
 
-        # answer
+        # ------------------------------------------
+        # SAVE ASSISTANT MESSAGE
+        # ------------------------------------------
 
-        st.subheader(
-            "Answer"
+        st.session_state.chat_history.append(
+            {
+                "role": "assistant",
+                "content": response.answer
+            }
         )
 
-        st.success(
-            response.answer
-        )
+        # ------------------------------------------
+        # SHOW ASSISTANT MESSAGE
+        # ------------------------------------------
 
-        # sources
+        with st.chat_message(
+            "assistant"
+        ):
 
-        st.subheader(
-            "Sources"
-        )
+            st.write(
+                response.answer
+            )
 
-        for source in response.sources:
+            st.markdown(
+                "#### Sources"
+            )
 
-            with st.expander(
-                f"📄 {source['source_name']} | Chunk {source['chunk_index']}"
+            for source in (
+                response.sources
             ):
 
-                st.write(
-                    f"Similarity Score: {source['score']:.3f}"
-                )
+                with st.expander(
+                    f"📄 {source['source_name']} | Chunk {source['chunk_index']}"
+                ):
+
+                    st.write(
+                        f"Similarity Score: {source['score']:.3f}"
+                    )
