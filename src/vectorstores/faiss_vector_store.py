@@ -39,13 +39,49 @@ class FAISSVectorStore(BaseVectorStore):
         with open(path / "chunks.pkl", "rb") as f:
             self.embedded_chunks = pickle.load(f)
 
+        print(
+            f"Loaded Chunks: "
+            f"{len(self.embedded_chunks)}"
+        )
+
+        print(
+            f"Loaded Vectors: "
+            f"{self.index.ntotal}"
+        )
+
     def search(self, query_embedding: list[float], k: int = 5):
+        print(
+            "\n===== SEARCH CALLED ====="
+        )
+
+        print(
+            f"Embedded Chunks: "
+            f"{len(self.embedded_chunks)}"
+        )
+
+        print(
+            f"FAISS Vectors: "
+            f"{self.index.ntotal}"
+        )
+
+        if len(self.embedded_chunks) == 0:
+            return []
+
+        k = min(k, len(self.embedded_chunks))
         query_vector = np.array([query_embedding], dtype="float32")
         scores, indices = self.index.search(query_vector, k)
+
+        print(
+            f"Indices Returned: "
+            f"{indices}"
+        )
 
         results = []
         for score, idx in zip(scores[0], indices[0]):
             if idx == -1:
+                continue
+
+            if idx >= len(self.embedded_chunks):
                 continue
 
             results.append(

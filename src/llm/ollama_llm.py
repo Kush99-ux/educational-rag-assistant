@@ -14,7 +14,7 @@ class OllamaLLM(
         self.model = model
 
         self.client = ollama.Client(
-            host="http://10.159.114.92:11434"
+            host="http://localhost:11434"
         )
 
     def generate(

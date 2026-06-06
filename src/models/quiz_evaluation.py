@@ -13,3 +13,5 @@ class QuizEvaluation:
     feedback: str
 
     correct_answers: list[str]
+
+    incorrect_questions: list[int]

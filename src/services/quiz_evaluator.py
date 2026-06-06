@@ -31,13 +31,19 @@ class QuizEvaluator:
 
         score = 0
 
-        for (
+        incorrect_questions = []
+
+        for index, (
             user_answer,
             correct_answer
-        ) in zip(
+        ) in enumerate(
 
-            attempt.user_answers,
-            correct_answers
+            zip(
+                attempt.user_answers,
+                correct_answers
+            ),
+
+            start=1
 
         ):
 
@@ -56,6 +62,12 @@ class QuizEvaluator:
             ):
 
                 score += 1
+
+            else:
+
+                incorrect_questions.append(
+                    index
+                )
 
         # ----------------------------
         # ACCURACY
@@ -113,17 +125,20 @@ class QuizEvaluator:
 
         return QuizEvaluation(
 
-            score=score,
+        score=score,
 
-            total_questions=
-            total_questions,
+        total_questions=
+        total_questions,
 
-            accuracy=
-            accuracy,
+        accuracy=
+        accuracy,
 
-            feedback=
-            feedback,
+        feedback=
+        feedback,
 
-            correct_answers=
-            correct_answers
-        )
+        correct_answers=
+        correct_answers,
+
+        incorrect_questions=
+        incorrect_questions
+    )

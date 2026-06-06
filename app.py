@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import re
 
 from src.core.service_container import (
     ServiceContainer
@@ -7,6 +8,10 @@ from src.core.service_container import (
 
 from src.models.quiz_request import (
     QuizRequest
+)
+
+from src.models.quiz_attempt import (
+    QuizAttempt
 )
 # --------------------------------------------------
 # PAGE CONFIG
@@ -73,8 +78,12 @@ if "total_chunks" not in st.session_state:
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-if "quiz_result" not in ( st.session_state): 
+if "quiz_result" not in st.session_state: 
     st.session_state.quiz_result = ""
+
+if "quiz_evaluation" not in st.session_state:
+
+    st.session_state.quiz_evaluation = None
 
 # --------------------------------------------------
 # SIDEBAR
@@ -220,6 +229,8 @@ with st.sidebar:
 
             st.session_state.quiz_result = ""
 
+            st.session_state.quiz_evaluation = None
+
             st.session_state.loaded_from_disk = False
 
             # Fresh container
@@ -300,108 +311,118 @@ with st.sidebar:
 
     st.divider()
 
-    st.subheader("🧠 Quiz Generator")
+    with st.expander(
+        "🧠 Quiz Generator",
+        expanded=False
+    ):
 
-    quiz_difficulty = st.selectbox(
-        "Difficulty",
-        [
-            "easy",
-            "medium",
-            "hard",
-            "mixed"
-        ]
-    )
+        quiz_difficulty = st.selectbox(
+            "Difficulty",
+            [
+                "easy",
+                "medium",
+                "hard",
+                "mixed"
+            ]
+        )
 
-    quiz_length = st.selectbox(
-        "Questions",
-        [
-            5,
-            10,
-            20,
-            50
-        ]
-    )
+        quiz_length = st.selectbox(
+            "Questions",
+            [
+                5,
+                10,
+                20,
+                50
+            ]
+        )
 
-    quiz_topics = st.text_input(
-        "Topics (comma separated)"
-    )
+        quiz_topics = st.text_input(
+            "Topics (comma separated)"
+        )
 
-    quiz_exam_mode = st.checkbox(
-        "Exam Focused"
-    )
+        quiz_exam_mode = st.checkbox(
+            "Exam Focused"
+        )
 
-    generate_quiz = st.button(
-        "Generate Quiz"
-    )
+        generate_quiz = st.button(
+            "Generate Quiz"
+        )
 
-    if st.button("Clear Quiz"): 
-        st.session_state.quiz_result = ""
-        st.rerun()
+        if st.button("Clear Quiz"): 
+            st.session_state.quiz_result = ""
+            st.session_state.quiz_evaluation = None
+            st.rerun()
 
-    if generate_quiz:
+        if generate_quiz:
 
-        if len(
-            st.session_state.documents
-        ) == 0:
+            if len(
+                st.session_state.documents
+            ) == 0:
 
-            st.warning(
-                "Please index a document first."
-            )
+                st.warning(
+                    "Please index a document first."
+                )
 
-        else:
+            else:
 
-            topic_list = []
+                topic_list = []
 
-            if quiz_topics.strip():
+                if quiz_topics.strip():
 
-                topic_list = [
+                    topic_list = [
 
-                    topic.strip()
+                        topic.strip()
 
-                    for topic in quiz_topics.split(",")
-                ]
+                        for topic in quiz_topics.split(",")
+                    ]
 
-            request = QuizRequest(
+                request = QuizRequest(
 
-                difficulty=
-                quiz_difficulty,
+                    difficulty=
+                    quiz_difficulty,
 
-                length=
-                quiz_length,
+                    length=
+                    quiz_length,
 
-                topics=
-                topic_list,
+                    topics=
+                    topic_list,
 
-                exam_focused=
-                quiz_exam_mode
-            )
+                    exam_focused=
+                    quiz_exam_mode
+                )
 
-            try:
+                try:
 
-                with st.spinner(
-                    "Generating quiz..."
-                ):
+                    with st.spinner(
+                        "Generating quiz..."
+                    ):
 
-                    result = (
+                        result = (
 
-                        st.session_state
-                        .container
-                        .quiz_service
-                        .generate_quiz(
-                            request
+                            st.session_state
+                            .container
+                            .quiz_service
+                            .generate_quiz(
+                                request
+                            )
+
                         )
 
+                    for key in list(st.session_state.keys()):
+                        if key.startswith("quiz_choice_"):
+                            del st.session_state[key]
+
+                    st.session_state.quiz_result = (
+                        result.quiz_text
                     )
 
-                st.session_state.quiz_result = (
-                    result.quiz_text
-                )
+                    st.session_state.quiz_evaluation = None
 
-            except Exception as e:
+                except Exception as e:
 
-                st.error(
-                    f"Error generating quiz: {e}"
-                )
+                    st.error(
+                        f"Error generating quiz: {e}"
+                    )
                 
 # --------------------------------------------------
 # MAIN AREA
@@ -415,141 +436,279 @@ st.caption(
     "Ask questions about your uploaded documents."
 )
 
-if ( 
-    st.session_state.quiz_result
-): 
-    st.subheader(
-        "📝 Generated Quiz"
-    )
+chat_tab, quiz_tab = st.tabs(["💬 Q&A Chat", "🧠 Interactive Quiz"])
 
-    st.markdown( 
-        st.session_state.quiz_result
-    )
+with quiz_tab:
 
-    st.divider()
+    if st.session_state.quiz_result:
 
-# --------------------------------------------------
-# DISPLAY CHAT HISTORY
-# --------------------------------------------------
-
-for message in (
-    st.session_state.chat_history
-):
-
-    with st.chat_message(
-        message["role"]
-    ):
-
-        st.write(
-            message["content"]
+        st.subheader(
+            "📝 Generated Quiz"
         )
 
-
-# --------------------------------------------------
-# CHAT INPUT
-# --------------------------------------------------
-
-question = st.chat_input(
-    "Ask a question about your documents..."
-)
-
-# --------------------------------------------------
-# QUESTION ANSWERING
-# --------------------------------------------------
-
-if question:
-
-    if len(
-        st.session_state.documents
-    ) == 0:
-
-        st.warning(
-            "Please index a document first."
+        st.markdown(
+            st.session_state.quiz_result
         )
+
+        st.divider()
+
+        questions = re.findall(
+
+            r"Question\s+\d+:",
+
+            st.session_state.quiz_result
+
+        )
+
+        if len(questions) == 0:
+
+            st.warning(
+                "Could not cleanly extract distinct question tokens from the quiz. Please try re-generating."
+            )
+
+        else:
+
+            user_answers = []
+
+            for i in range(
+                len(questions)
+            ):
+
+                default_opts = ["A", "B", "C", "D"]
+                saved_key = f"quiz_choice_{i}"
+
+                answer = st.selectbox(
+
+                    f"Question {i+1} Answer",
+
+                    default_opts,
+
+                    key=saved_key
+
+                )
+
+                user_answers.append(
+                    answer
+                )
+
+            if st.button(
+                "Submit Quiz"
+            ):
+
+                attempt = QuizAttempt(
+
+                    quiz_text=
+                    st.session_state.quiz_result,
+
+                    user_answers=
+                    user_answers
+                )
+
+                evaluation = (
+
+                    st.session_state
+                    .container
+                    .quiz_evaluator
+                    .evaluate(
+                        attempt
+                    )
+
+                )
+
+                st.session_state.quiz_evaluation = (
+                    evaluation
+                )
+
+                st.rerun()
+
+        if (
+            st.session_state.quiz_evaluation
+        ):
+
+            st.divider()
+
+            evaluation = (
+                st.session_state.quiz_evaluation
+            )
+
+            st.subheader(
+                "📊 Quiz Results"
+            )
+
+            st.success(
+
+                f"Score: "
+
+                f"{evaluation.score}/"
+
+                f"{evaluation.total_questions}"
+            )
+
+            st.metric(
+
+                "Accuracy",
+
+                f"{evaluation.accuracy:.2f}%"
+            )
+
+            st.info(
+                evaluation.feedback
+            )
+
+            st.write(
+                "Correct Answers:"
+            )
+
+            for i, answer in enumerate(
+
+                evaluation.correct_answers,
+
+                start=1
+
+            ):
+
+                st.write(
+                    f"Q{i}: {answer}"
+                )
+
+            if len(
+                evaluation.incorrect_questions
+            ) > 0:
+
+                st.warning(
+
+                    "Incorrect Questions: "
+
+                    + ", ".join(
+
+                        str(q)
+
+                        for q in
+                        evaluation.incorrect_questions
+                    )
+                )
+
+            if st.button("🗑 Dismiss Results"):
+                st.session_state.quiz_evaluation = None
+                st.rerun()
 
     else:
 
-        # ------------------------------------------
-        # SHOW USER MESSAGE
-        # ------------------------------------------
+        st.info("No active quiz. Generate a quiz from the sidebar.")
 
+with chat_tab:
 
-        st.session_state.chat_history.append(
-            {
-                "role": "user",
-                "content": question
-            }
-        )
+    # --------------------------------------------------
+    # DISPLAY CHAT HISTORY
+    # --------------------------------------------------
 
-        with st.chat_message("user"):
-            st.write(question)
-        
-        # ------------------------------------------
-        # GENERATE ANSWER
-        # ------------------------------------------
-
-        print("APP STEP 1")
-        with st.spinner(
-            "Generating answer..."
-        ):
-            print("APP STEP 2")
-
-            response = (
-                st.session_state.container
-                .rag_pipeline
-                .answer(
-                    question,
-                    st.session_state.chat_history
-                )
-            )
-
-            print("APP STEP 3")
-
-        # ------------------------------------------
-        # DEBUG OUTPUT
-        # ------------------------------------------
-
-        print("\nRAW SOURCES")
-
-        for source in response.sources:
-
-            print(source)
-
-        # ------------------------------------------
-        # SAVE ASSISTANT MESSAGE
-        # ------------------------------------------
-
-        st.session_state.chat_history.append(
-            {
-                "role": "assistant",
-                "content": response.answer
-            }
-        )
-
-        # ------------------------------------------
-        # SHOW ASSISTANT MESSAGE
-        # ------------------------------------------
+    for message in (
+        st.session_state.chat_history
+    ):
 
         with st.chat_message(
-            "assistant"
+            message["role"]
         ):
 
             st.write(
-                response.answer
+                message["content"]
             )
 
-            st.markdown(
-                "#### Sources"
-            )
+            if "sources" in message and message["sources"]:
 
-            for source in (
-                response.sources
-            ):
+                st.markdown(
+                    "#### Sources"
+                )
 
-                with st.expander(
-                    f"📄 {source['source_name']} | Chunk {source['chunk_index']}"
+                for source in (
+                    message["sources"]
                 ):
 
-                    st.write(
-                        f"Similarity Score: {source['score']:.3f}"
+                    with st.expander(
+                        f"📄 {source['source_name']} | Chunk {source['chunk_index']}"
+                    ):
+
+                        st.write(
+                            f"Similarity Score: {source['score']:.3f}"
+                        )
+
+
+    # --------------------------------------------------
+    # CHAT INPUT
+    # --------------------------------------------------
+
+    question = st.chat_input(
+        "Ask a question about your documents..."
+    )
+
+    # --------------------------------------------------
+    # QUESTION ANSWERING
+    # --------------------------------------------------
+
+    if question:
+
+        if len(
+            st.session_state.documents
+        ) == 0:
+
+            st.warning(
+                "Please index a document first."
+            )
+
+        else:
+
+            # ------------------------------------------
+            # SAVE USER MESSAGE TO STATE
+            # ------------------------------------------
+
+            st.session_state.chat_history.append(
+                {
+                    "role": "user",
+                    "content": question
+                }
+            )
+            
+            # ------------------------------------------
+            # GENERATE ANSWER
+            # ------------------------------------------
+
+            print("APP STEP 1")
+            with st.spinner(
+                "Generating answer..."
+            ):
+                print("APP STEP 2")
+
+                response = (
+                    st.session_state.container
+                    .rag_pipeline
+                    .answer(
+                        question,
+                        st.session_state.chat_history[:-1]
                     )
+                )
+
+                print("APP STEP 3")
+
+            # ------------------------------------------
+            # DEBUG OUTPUT
+            # ------------------------------------------
+
+            print("\nRAW SOURCES")
+
+            for source in response.sources:
+
+                print(source)
+
+            # ------------------------------------------
+            # SAVE ASSISTANT MESSAGE & SOURCES TO STATE
+            # ------------------------------------------
+
+            st.session_state.chat_history.append(
+                {
+                    "role": "assistant",
+                    "content": response.answer,
+                    "sources": response.sources
+                }
+            )
+
+            st.rerun()
