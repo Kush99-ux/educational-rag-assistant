@@ -6,7 +6,7 @@ class QuizRequest:
 
     difficulty: str = "medium"
 
-    length: int = 10
+    length: int = 5
 
     topics: list[str] | None = None
 

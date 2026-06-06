@@ -1,5 +1,9 @@
 from dataclasses import dataclass
 
+from src.models.quiz_question import (
+    QuizQuestion
+)
+
 
 @dataclass
 class QuizResult:
@@ -13,3 +17,7 @@ class QuizResult:
     topics: list[str]
 
     exam_focused: bool
+
+    generated_questions: int
+
+    questions: list[QuizQuestion]

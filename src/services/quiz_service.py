@@ -1,3 +1,5 @@
+import time
+
 from src.llm.ollama_llm import (
     OllamaLLM
 )
@@ -13,6 +15,26 @@ from src.models.quiz_result import (
 from src.vectorstores.faiss_vector_store import (
     FAISSVectorStore
 )
+
+# ----------------------------------
+# CONFIGURATION
+# ----------------------------------
+
+MAX_CONTEXT_CHUNKS = 8
+
+ALLOWED_DIFFICULTIES = [
+    "easy",
+    "medium",
+    "hard",
+    "mixed"
+]
+
+ALLOWED_LENGTHS = [
+    5,
+    10,
+    20,
+    50
+]
 
 
 class QuizService:
@@ -43,7 +65,8 @@ class QuizService:
         )
 
         print(
-            f"QUIZ DEBUG - Total Chunks: {len(chunks)}"
+            f"QUIZ DEBUG - Total Chunks: "
+            f"{len(chunks)}"
         )
 
         if len(chunks) == 0:
@@ -61,7 +84,8 @@ class QuizService:
         if topics:
 
             print(
-                f"QUIZ DEBUG - Topics: {topics}"
+                f"QUIZ DEBUG - Topics: "
+                f"{topics}"
             )
 
             for chunk in chunks:
@@ -88,11 +112,14 @@ class QuizService:
         else:
 
             selected_chunks = (
-                chunks[:3]
+                chunks[
+                    :MAX_CONTEXT_CHUNKS
+                ]
             )
 
             print(
-                "QUIZ DEBUG - Using first 3 chunks"
+                f"QUIZ DEBUG - Using first "
+                f"{MAX_CONTEXT_CHUNKS} chunks"
             )
 
         # ----------------------------------
@@ -102,11 +129,14 @@ class QuizService:
         if len(selected_chunks) == 0:
 
             print(
-                "QUIZ DEBUG - No topic matches."
+                "QUIZ DEBUG - No topic "
+                "matches found."
             )
 
             selected_chunks = (
-                chunks[:3]
+                chunks[
+                    :MAX_CONTEXT_CHUNKS
+                ]
             )
 
         # ----------------------------------
@@ -117,7 +147,9 @@ class QuizService:
 
             chunk.text
 
-            for chunk in selected_chunks[:3]
+            for chunk in selected_chunks[
+                :MAX_CONTEXT_CHUNKS
+            ]
 
         )
 
@@ -147,6 +179,7 @@ class QuizService:
 Generate EASY questions.
 
 Focus on:
+
 - Definitions
 - Core concepts
 - Direct recall
@@ -159,30 +192,64 @@ Focus on:
 Generate HARD questions.
 
 Focus on:
+
 - Deep analysis
 - Advanced reasoning
 - Edge cases
 - Complex applications
+- Theoretical understanding
 """
 
         if difficulty == "mixed":
 
             return """
-Generate a MIX of:
+Generate a balanced mix of:
 
 - Easy questions
 - Medium questions
 - Hard questions
+
+Ensure variety.
 """
 
         return """
 Generate MEDIUM difficulty questions.
 
 Focus on:
+
 - Conceptual understanding
 - Applications
 - Multi-step reasoning
 """
+
+    # ----------------------------------
+    # VALIDATION
+    # ----------------------------------
+
+    def _validate_request(
+        self,
+        request: QuizRequest
+    ):
+
+        if (
+            request.difficulty
+            not in ALLOWED_DIFFICULTIES
+        ):
+
+            raise ValueError(
+                f"Invalid difficulty: "
+                f"{request.difficulty}"
+            )
+
+        if (
+            request.length
+            not in ALLOWED_LENGTHS
+        ):
+
+            raise ValueError(
+                f"Invalid length: "
+                f"{request.length}"
+            )
 
     # ----------------------------------
     # MAIN GENERATION
@@ -194,19 +261,39 @@ Focus on:
     ) -> QuizResult:
 
         print(
-            "\nQUIZ GENERATION STARTED"
+            "\n"
+            + "=" * 50
         )
 
         print(
-            f"Difficulty: {request.difficulty}"
+            "QUIZ GENERATION STARTED"
         )
 
         print(
-            f"Length: {request.length}"
+            "=" * 50
+        )
+
+        start_time = (
+            time.time()
+        )
+
+        self._validate_request(
+            request
         )
 
         print(
-            f"Topics: {request.topics}"
+            f"Difficulty: "
+            f"{request.difficulty}"
+        )
+
+        print(
+            f"Length: "
+            f"{request.length}"
+        )
+
+        print(
+            f"Topics: "
+            f"{request.topics}"
         )
 
         print(
@@ -214,11 +301,19 @@ Focus on:
             f"{request.exam_focused}"
         )
 
+        # ----------------------------------
+        # CONTEXT
+        # ----------------------------------
+
         context = (
             self._build_context(
                 request.topics
             )
         )
+
+        # ----------------------------------
+        # DIFFICULTY
+        # ----------------------------------
 
         difficulty_prompt = (
             self._difficulty_prompt(
@@ -226,20 +321,33 @@ Focus on:
             )
         )
 
+        # ----------------------------------
+        # EXAM MODE
+        # ----------------------------------
+
         exam_prompt = ""
 
         if request.exam_focused:
 
             exam_prompt = """
-Focus heavily on:
+Prioritize:
 
-- Frequently tested concepts
-- Important formulas
-- Core definitions
-- Typical university exam questions
+- High-yield exam topics
+- Frequently repeated concepts
+- Core formulas
+- Numerical problem solving
+- University examination patterns
 
-Avoid trivia.
+Avoid:
+
+- Rare facts
+- Trivial details
+- Low-value information
 """
+
+        # ----------------------------------
+        # PROMPT
+        # ----------------------------------
 
         prompt = f"""
 You are an expert educational quiz generator.
@@ -255,10 +363,14 @@ multiple-choice questions.
 Requirements:
 
 1. Every question must have:
-   A, B, C, D options
+
+A)
+B)
+C)
+D)
 
 2. Only ONE option
-   should be correct.
+should be correct.
 
 3. Include:
 
@@ -270,8 +382,20 @@ for every question.
 
 4. Do NOT invent facts.
 
-5. Use only the
+5. Use ONLY the
 provided study material.
+
+6. Do NOT repeat concepts.
+
+7. Every question should
+test a different idea.
+
+8. Questions should
+gradually increase in
+difficulty when possible.
+
+9. Make questions suitable
+for university students.
 
 Output Format:
 
@@ -303,8 +427,13 @@ Study Material:
         )
 
         print(
-            "QUIZ DEBUG - Sending Prompt To Ollama"
+            "QUIZ DEBUG - Sending "
+            "Prompt To Ollama"
         )
+
+        # ----------------------------------
+        # GENERATION
+        # ----------------------------------
 
         quiz_text = (
             self.llm.generate(
@@ -316,15 +445,34 @@ Study Material:
             "QUIZ DEBUG - Ollama Returned"
         )
 
+        elapsed_time = (
+            time.time()
+            - start_time
+        )
+
+        print(
+            f"QUIZ GENERATED IN "
+            f"{elapsed_time:.2f} sec"
+        )
+
         print(
             "QUIZ V2 - Generation Complete"
         )
+
+        print(
+            "=" * 50
+        )
+
+        # ----------------------------------
+        # RESULT
+        # ----------------------------------
 
         return QuizResult(
             quiz_text=quiz_text,
             difficulty=request.difficulty,
             length=request.length,
-            topics=request.topics
-            or [],
-            exam_focused=request.exam_focused
+            topics=request.topics or [],
+            exam_focused=request.exam_focused,
+            generated_questions=request.length,
+            questions=[]
         )
