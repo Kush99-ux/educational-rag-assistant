@@ -17,7 +17,7 @@ class QuizEvaluator:
     ) -> QuizEvaluation:
 
         # ----------------------------
-        # EXTRACT CORRECT ANSWERS
+        # EXTRACT ANSWERS
         # ----------------------------
 
         correct_answers = re.findall(
@@ -108,7 +108,7 @@ class QuizEvaluator:
             )
 
         # ----------------------------
-        # RETURN RESULT
+        # RESULT
         # ----------------------------
 
         return QuizEvaluation(

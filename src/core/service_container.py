@@ -21,6 +21,10 @@ from src.services.quiz_service import (
     QuizService
 )
 
+from src.services.quiz_evaluator import (
+    QuizEvaluator
+)
+
 
 class ServiceContainer:
 
@@ -56,4 +60,8 @@ class ServiceContainer:
             QuizService(
                 self.vector_store
              )
+        )
+
+        self.quiz_evaluator = (
+            QuizEvaluator()
         )
