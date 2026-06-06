@@ -180,6 +180,58 @@ with st.sidebar:
 
     st.divider()
 
+    if st.button(
+        "🗑 Clear Knowledge Base"
+    ):
+
+        try:
+
+            # Delete persisted files
+
+            if os.path.exists(
+                "vector_store/faiss.index"
+            ):
+
+                os.remove(
+                    "vector_store/faiss.index"
+                )
+
+            if os.path.exists(
+                "vector_store/chunks.pkl"
+            ):
+
+                os.remove(
+                    "vector_store/chunks.pkl"
+                )
+
+            # Reset session state
+
+            st.session_state.documents = []
+
+            st.session_state.total_chunks = 0
+
+            st.session_state.chat_history = []
+
+            st.session_state.loaded_from_disk = False
+
+            # Fresh container
+
+            st.session_state.container = (
+                ServiceContainer()
+            )
+
+            st.success(
+                "Knowledge Base Cleared"
+            )
+
+            st.rerun()
+
+        except Exception as e:
+
+            st.error(
+                f"Error clearing knowledge base: {e}"
+            )
+
     # ----------------------------------------------
     # DOCUMENT LIST
     # ----------------------------------------------
@@ -290,6 +342,7 @@ if question:
         # SHOW USER MESSAGE
         # ------------------------------------------
 
+
         st.session_state.chat_history.append(
             {
                 "role": "user",
@@ -297,29 +350,29 @@ if question:
             }
         )
 
-        with st.chat_message(
-            "user"
-        ):
-
-            st.write(
-                question
-            )
-
+        with st.chat_message("user"):
+            st.write(question)
+        
         # ------------------------------------------
         # GENERATE ANSWER
         # ------------------------------------------
 
+        print("APP STEP 1")
         with st.spinner(
             "Generating answer..."
         ):
+            print("APP STEP 2")
 
             response = (
                 st.session_state.container
                 .rag_pipeline
                 .answer(
-                    question
+                    question,
+                    st.session_state.chat_history
                 )
             )
+
+            print("APP STEP 3")
 
         # ------------------------------------------
         # DEBUG OUTPUT

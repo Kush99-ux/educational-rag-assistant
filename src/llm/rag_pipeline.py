@@ -2,6 +2,10 @@ from src.retrieval.faiss_retriever import (
     FAISSRetriever
 )
 
+from src.retrieval.query_rewriter import (
+    QueryRewriter
+)
+
 from src.models.rag_response import (
     RAGResponse
 )
@@ -14,6 +18,7 @@ from src.llm.ollama_llm import (
     OllamaLLM
 )
 
+
 class RAGPipeline:
 
     def __init__(
@@ -25,24 +30,64 @@ class RAGPipeline:
 
         self.llm = OllamaLLM()
 
+        self.query_rewriter = (
+            QueryRewriter()
+        )
+
     def answer(
         self,
         question: str,
+        chat_history: list = None,
         k: int = 3
     ) -> RAGResponse:
 
+        if chat_history is None:
+
+            chat_history = []
+
+        rewritten_question = (
+            self.query_rewriter.rewrite(
+                question,
+                chat_history
+            )
+        )
+
+        print(
+            f"\nOriginal Question: {question}"
+        )
+
+        print(
+            f"Rewritten Question: {rewritten_question}"
+        )
+
+        print(
+            "STEP 1 - Query Rewrite Done"
+        )
+
         results = self.retriever.retrieve(
-        question,
-        k=k
+            rewritten_question,
+            k=k
+        )
+
+        print(
+            "STEP 2 - Retrieval Done"
         )
 
         prompt = build_rag_prompt(
-        question,
-        results
+            rewritten_question,
+            results
+        )
+
+        print(
+            "STEP 3 - Prompt Built"
         )
 
         answer = self.llm.generate(
             prompt
+        )
+
+        print(
+            "STEP 4 - LLM Finished"
         )
 
         sources = []
