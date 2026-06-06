@@ -9,16 +9,20 @@ class OllamaLLM(
 
     def __init__(
         self,
-        model: str = "qwen3:4b"
+        model: str = "qwen2.5:3b"
     ):
         self.model = model
+
+        self.client = ollama.Client(
+            host="http://10.159.114.92:11434"
+        )
 
     def generate(
         self,
         prompt: str
     ) -> str:
 
-        response = ollama.chat(
+        response = self.client.chat(
             model=self.model,
             messages=[
                 {
