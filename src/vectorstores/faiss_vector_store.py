@@ -50,19 +50,6 @@ class FAISSVectorStore(BaseVectorStore):
         )
 
     def search(self, query_embedding: list[float], k: int = 5):
-        print(
-            "\n===== SEARCH CALLED ====="
-        )
-
-        print(
-            f"Embedded Chunks: "
-            f"{len(self.embedded_chunks)}"
-        )
-
-        print(
-            f"FAISS Vectors: "
-            f"{self.index.ntotal}"
-        )
 
         if len(self.embedded_chunks) == 0:
             return []
@@ -70,11 +57,6 @@ class FAISSVectorStore(BaseVectorStore):
         k = min(k, len(self.embedded_chunks))
         query_vector = np.array([query_embedding], dtype="float32")
         scores, indices = self.index.search(query_vector, k)
-
-        print(
-            f"Indices Returned: "
-            f"{indices}"
-        )
 
         results = []
         for score, idx in zip(scores[0], indices[0]):

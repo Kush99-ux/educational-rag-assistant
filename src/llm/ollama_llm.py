@@ -9,7 +9,7 @@ class OllamaLLM(
 
     def __init__(
         self,
-        model: str = "qwen2.5:3b"
+        model: str = "llama3.1:8b"
     ):
         self.model = model
 

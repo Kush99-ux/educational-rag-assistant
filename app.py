@@ -672,11 +672,9 @@ with chat_tab:
             # GENERATE ANSWER
             # ------------------------------------------
 
-            print("APP STEP 1")
             with st.spinner(
                 "Generating answer..."
             ):
-                print("APP STEP 2")
 
                 response = (
                     st.session_state.container
@@ -687,17 +685,6 @@ with chat_tab:
                     )
                 )
 
-                print("APP STEP 3")
-
-            # ------------------------------------------
-            # DEBUG OUTPUT
-            # ------------------------------------------
-
-            print("\nRAW SOURCES")
-
-            for source in response.sources:
-
-                print(source)
 
             # ------------------------------------------
             # SAVE ASSISTANT MESSAGE & SOURCES TO STATE

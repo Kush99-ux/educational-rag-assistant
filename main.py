@@ -7,5 +7,3 @@ logger = get_logger(__name__)
 config = load_config()
 
 logger.info("Application started")
-
-print(config)

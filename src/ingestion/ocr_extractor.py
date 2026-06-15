@@ -27,9 +27,4 @@ def extract_text_from_image(
         return text.strip()
 
     except Exception as e:
-
-        print(
-            f"OCR ERROR: {e}"
-        )
-
         return ""

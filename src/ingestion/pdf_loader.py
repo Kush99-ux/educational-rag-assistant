@@ -90,12 +90,6 @@ def load_pdf(
             )
         )
 
-        print(
-            f"Page "
-            f"{page_num + 1}: "
-            f"{len(images)} images"
-        )
-
         for image in images:
 
             try:
@@ -155,25 +149,12 @@ def load_pdf(
 
             except Exception as e:
 
-                print(
-                    f"IMAGE OCR ERROR: "
-                    f"{e}"
+                logger.warning(
+                    f"IMAGE OCR ERROR: {e}"
                 )
 
     content = "\n\n".join(
         text_parts
-    )
-
-    print(
-    "\n===== OCR DOCUMENT PREVIEW =====\n"
-    )
-
-    print(
-        content[:10000]
-    )
-
-    print(
-        "\n===============================\n"
     )
 
     return Document(
