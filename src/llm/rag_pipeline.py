@@ -60,6 +60,17 @@ class RAGPipeline:
             f"Rewritten Question: {rewritten_question}"
         )
 
+        question_lower = (
+            rewritten_question.lower()
+        )
+
+        if (
+            "table" in question_lower
+            or
+            "page" in question_lower
+        ):
+            k = 10
+
         print(
             "STEP 1 - Query Rewrite Done"
         )

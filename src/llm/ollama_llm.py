@@ -9,12 +9,12 @@ class OllamaLLM(
 
     def __init__(
         self,
-        model: str = "qwen2.5:3b"
+        model: str = "llama3.1:8b"
     ):
         self.model = model
 
         self.client = ollama.Client(
-            host="http://10.159.114.92:11434"
+            host="http://localhost:11434"
         )
 
     def generate(

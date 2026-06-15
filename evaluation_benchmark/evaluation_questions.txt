@@ -1,0 +1,47 @@
+=== BASIC ===
+
+What is Sound3DVDet?
+
+What is SoundLoc3D?
+
+Who are the authors of SoundLoc3D?
+
+What conference was SoundLoc3D published in?
+
+=== SUMMARY ===
+
+Summarize the Sound3DVDet paper.
+
+Summarize the SoundLoc3D paper.
+
+=== ARCHITECTURE ===
+
+What are the main components of SoundLoc3D?
+
+What is the role of the Feature Mixer?
+
+What is the role of LoFTR?
+
+=== COMPARISON ===
+
+What is the difference between Sound3DVDet and SoundLoc3D?
+
+Why does SoundLoc3D use depth maps?
+
+=== PAGE ===
+
+What is written on page 3 of SoundLoc3D?
+
+Summarize page 5 of Sound3DVDet.
+
+=== CROSS DOCUMENT ===
+
+How are the two papers related?
+
+What new components appear only in SoundLoc3D?
+
+git add .
+git commit -m "Add research paper evaluation benchmark"
+git tag v1.9-evaluation-benchmark
+git push origin feature/ocr-adaptive-retrieval
+git push origin v1.9-evaluation-benchmark
