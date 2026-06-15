@@ -1,8 +1,10 @@
 # environments
 .venv/
+env/
 
 # secrets
 .env
+.streamlit/secrets.toml
 
 # logs
 logs/
@@ -17,10 +19,15 @@ __pycache__/
 
 # vector databases
 vector_store/
+knowledge_base/
 
 # uploaded files
 data/raw/*
 data/processed/*
+
+# OCR outputs
+temp_ocr/
+temp_image.png
 
 # OS
 .DS_Store
