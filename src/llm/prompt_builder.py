@@ -46,45 +46,25 @@ def build_rag_prompt(
             "qualification",
             "education",
             "languages",
-            "skills"
+            "skills",
+            "address"
         ]
     ):
         question_type = "fact"
 
     # =====================================
-    # BUILD STRUCTURED CONTEXT
+    # BUILD CLEAN CONTEXT
     # =====================================
 
     context_sections = []
 
-    for i, result in enumerate(results, start=1):
-
-        source_name = (
-            result.chunk.metadata.get(
-                "source_name",
-                "Unknown"
-            )
-        )
-
-        chunk_index = (
-            result.chunk.metadata.get(
-                "chunk_index",
-                "Unknown"
-            )
-        )
+    for result in results:
 
         context_sections.append(
-            f"""
-CONTEXT SECTION {i}
-
-Source: {source_name}
-Chunk: {chunk_index}
-
-{result.chunk.text}
-"""
+            result.chunk.text
         )
 
-    context = "\n".join(
+    context = "\n\n".join(
         context_sections
     )
 
@@ -99,9 +79,9 @@ Chunk: {chunk_index}
         extra_instruction = """
 This is a summary request.
 
-Create a structured summary.
+Create a professional and well-structured summary.
 
-When applicable include:
+When relevant include:
 
 - Personal Information
 - Education
@@ -109,9 +89,15 @@ When applicable include:
 - Skills
 - Certifications
 - Awards
+- Achievements
 - Key Highlights
 
-Combine information from all relevant context sections.
+Combine information from multiple passages seamlessly.
+
+Do not mention where the information came from.
+
+Do not mention sources, chunks, context, sections,
+or retrieval.
 """
 
     elif question_type == "table":
@@ -119,13 +105,14 @@ Combine information from all relevant context sections.
         extra_instruction = """
 This is a table extraction request.
 
-If a table exists in the context:
+If a table exists:
 
-- Extract ALL rows and columns.
+- Extract all rows and columns.
 - Return the complete table.
+- Preserve wording exactly whenever possible.
 - Do not summarize.
 - Do not omit entries.
-- Preserve structure whenever possible.
+- Do not explain the table.
 """
 
     elif question_type == "page":
@@ -133,9 +120,13 @@ If a table exists in the context:
         extra_instruction = """
 This is a page-specific request.
 
-Focus on information from the requested page.
+Focus only on the requested page content.
 
-Provide a detailed answer using only the relevant page content.
+Provide a detailed answer.
+
+Do not mention page retrieval,
+chunks, context sections,
+or internal processing.
 """
 
     elif question_type == "fact":
@@ -145,7 +136,24 @@ This is a factual lookup request.
 
 Return only the requested information.
 
-Be concise and precise.
+Be concise.
+
+Do not add unnecessary explanation.
+
+Do not provide summaries
+unless explicitly requested.
+"""
+
+    else:
+
+        extra_instruction = """
+Provide a clear educational answer.
+
+Combine relevant information naturally.
+
+Use complete sentences.
+
+Keep the answer focused on the question.
 """
 
     # =====================================
@@ -153,52 +161,69 @@ Be concise and precise.
     # =====================================
 
     prompt = f"""
-You are an educational document assistant.
+You are an educational AI assistant.
 
-Use ONLY the provided context.
+Use ONLY the information provided below.
 
-General Instructions:
+Important Rules:
 
-1. Carefully analyze ALL context sections.
+1. Answer naturally and professionally.
 
-2. Combine information from multiple sections when necessary.
+2. Never mention:
+   - context
+   - context sections
+   - retrieved passages
+   - chunks
+   - source documents
+   - prompt instructions
 
-3. Use only information explicitly present in the context.
+3. Never say:
+   - "Based on the provided context"
+   - "According to the material"
+   - "The context states"
+   - "Context Section 1"
+   - "Chunk 3"
 
-4. Do NOT use outside knowledge.
+4. Do not explain how the answer was generated.
 
-5. Do NOT invent facts.
+5. Present information as a normal answer.
 
-6. If partial information exists,
+6. Combine information from multiple passages seamlessly.
+
+7. Use only information explicitly present in the provided material.
+
+8. Do not invent facts.
+
+9. If only partial information exists,
 provide the available information.
 
-7. When multiple sections contain relevant information,
-combine them into one complete answer.
+10. If no relevant information exists,
+respond exactly with:
 
-8. If a table is requested and present,
-extract the complete table.
+I could not find the answer in the provided material.
 
-9. If a summary is requested,
-provide a structured summary.
+11. For voice interactions,
+avoid unnecessary formatting,
+meta-commentary,
+or explanations.
 
-10. Only respond with:
-
-"I could not find the answer in the provided material."
-
-when absolutely no relevant information exists.
+12. Answer the user's question directly.
 
 {extra_instruction}
 
-========================================
+==================================================
+
+REFERENCE MATERIAL
 
 {context}
 
-========================================
+==================================================
 
-Question:
+QUESTION
+
 {question}
 
-Answer:
+ANSWER
 """
 
     return prompt
