@@ -2,6 +2,14 @@ import os
 import streamlit as st
 import re
 
+from streamlit_mic_recorder import (
+    mic_recorder
+)
+
+from src.audio.stt import (
+    SpeechToText
+)
+
 from src.core.service_container import (
     ServiceContainer
 )
@@ -13,6 +21,16 @@ from src.models.quiz_request import (
 from src.models.quiz_attempt import (
     QuizAttempt
 )
+
+if "voice_question" not in st.session_state:
+    st.session_state.voice_question = None
+
+if "last_audio_hash" not in st.session_state:
+    st.session_state.last_audio_hash = None
+
+if "stt" not in st.session_state:
+    st.session_state.stt = (SpeechToText())
+
 # --------------------------------------------------
 # PAGE CONFIG
 # --------------------------------------------------
@@ -637,13 +655,71 @@ with chat_tab:
     # CHAT INPUT
     # --------------------------------------------------
 
-    question = st.chat_input(
+    audio = mic_recorder(
+        start_prompt="🎤 Speak",
+        stop_prompt="⏹ Stop",
+        key="voice_input"
+    )
+
+    if audio:
+
+        audio_hash = hash(audio["bytes"])
+
+        if st.session_state.last_audio_hash != audio_hash:
+
+            st.session_state.last_audio_hash = audio_hash
+
+            audio_path = "temp_question.wav"
+
+            with open(
+                audio_path,
+                "wb"
+            ) as f:
+
+                f.write(
+                    audio["bytes"]
+                )
+
+            question = (
+                st.session_state.stt
+                .transcribe(audio_path)
+            )
+
+            st.session_state.voice_question = (
+                question
+            )
+
+            st.success(
+                "Voice recognized!"
+            )
+
+            st.write(
+                f"Transcript: {question}"
+            )
+
+    question = None
+
+    text_question = st.chat_input(
         "Ask a question about your documents..."
     )
+
+    if text_question:
+
+        question = text_question
+
+    elif st.session_state.voice_question:
+
+        question = (
+            st.session_state.voice_question
+        )
+
+        st.session_state.voice_question = None
 
     # --------------------------------------------------
     # QUESTION ANSWERING
     # --------------------------------------------------
+
+
 
     if question:
 
