@@ -58,7 +58,9 @@ def build_rag_prompt(
 
     context_sections = []
 
-    for result in results:
+    MAX_CONTEXT_CHUNKS = 4
+
+    for result in results[:MAX_CONTEXT_CHUNKS]:
 
         context_sections.append(
             result.chunk.text
@@ -68,6 +70,10 @@ def build_rag_prompt(
         context_sections
     )
 
+    print("\n===== PROMPT DEBUG =====")
+    print(f"Chunks passed to LLM: {len(context_sections)}")
+    print(f"Prompt length (characters): {len(context)}")
+    print("========================\n")
     # =====================================
     # QUESTION-SPECIFIC INSTRUCTIONS
     # =====================================

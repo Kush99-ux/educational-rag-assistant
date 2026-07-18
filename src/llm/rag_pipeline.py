@@ -1,3 +1,5 @@
+import time
+
 from src.retrieval.faiss_retriever import (
     FAISSRetriever
 )
@@ -45,11 +47,24 @@ class RAGPipeline:
 
             chat_history = []
 
+        # Start total timer
+        total_start = time.perf_counter()
+
+        # -------------------------------
+        # Query Rewrite
+        # -------------------------------
+        rewrite_start = time.perf_counter()
+
         rewritten_question = (
             self.query_rewriter.rewrite(
                 question,
                 chat_history
             )
+        )
+
+        rewrite_time = (
+            time.perf_counter()
+            - rewrite_start
         )
 
         print(
@@ -75,13 +90,34 @@ class RAGPipeline:
             "STEP 1 - Query Rewrite Done"
         )
 
-        results = self.retriever.retrieve(
-            rewritten_question,
-            k=k
+        # -------------------------------
+        # Retrieval
+        # -------------------------------
+        retrieval_start = (
+            time.perf_counter()
+        )
+
+        results = (
+            self.retriever.retrieve(
+                rewritten_question,
+                k=k
+            )
+        )
+
+        retrieval_time = (
+            time.perf_counter()
+            - retrieval_start
         )
 
         print(
             "STEP 2 - Retrieval Done"
+        )
+
+        # -------------------------------
+        # Prompt Building
+        # -------------------------------
+        prompt_start = (
+            time.perf_counter()
         )
 
         prompt = build_rag_prompt(
@@ -89,12 +125,31 @@ class RAGPipeline:
             results
         )
 
+        prompt_time = (
+            time.perf_counter()
+            - prompt_start
+        )
+
         print(
             "STEP 3 - Prompt Built"
         )
 
-        answer = self.llm.generate(
-            prompt
+        # -------------------------------
+        # LLM Generation
+        # -------------------------------
+        llm_start = (
+            time.perf_counter()
+        )
+
+        answer = (
+            self.llm.generate(
+                prompt
+            )
+        )
+
+        llm_time = (
+            time.perf_counter()
+            - llm_start
         )
 
         print(
@@ -121,6 +176,35 @@ class RAGPipeline:
                         result.score
                 }
             )
+
+        # -------------------------------
+        # Performance Report
+        # -------------------------------
+        total_time = (
+            time.perf_counter()
+            - total_start
+        )
+
+        print("\n" + "=" * 45)
+        print("          PERFORMANCE REPORT")
+        print("=" * 45)
+        print(
+            f"Query Rewrite      : {rewrite_time:.3f} s"
+        )
+        print(
+            f"Retrieval          : {retrieval_time:.3f} s"
+        )
+        print(
+            f"Prompt Building    : {prompt_time:.3f} s"
+        )
+        print(
+            f"LLM Generation     : {llm_time:.3f} s"
+        )
+        print("-" * 45)
+        print(
+            f"Total Pipeline     : {total_time:.3f} s"
+        )
+        print("=" * 45)
 
         return RAGResponse(
             answer=answer,
